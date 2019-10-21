@@ -61,6 +61,15 @@ impl Player {
       should_grow: false,
     }
   }
+
+  pub fn grow(&self) -> Player {
+    Player {
+      head: self.head,
+      tail: self.tail.clone(),
+      direction: self.direction,
+      should_grow: true,
+    }
+  }
 }
 
 pub struct Snake {
@@ -87,11 +96,14 @@ impl Snake {
   }
 
   pub fn next_frame(&self, canvas: &Canvas, input_queue: &mut Vec<Direction>) -> Snake {
-    let next_player = self.player.next(&canvas, input_queue);
+    let calculated_player = self.player.next(&canvas, input_queue);
+    let next_player;
     let next_food =
-      if next_player.head.x == self.food.x && next_player.head.y == self.food.y {
+      if calculated_player.head.x == self.food.x && calculated_player.head.y == self.food.y {
+        next_player = calculated_player.grow();
         Snake::create_food(canvas)
       } else {
+        next_player = calculated_player;
         self.food
       };
     Snake {
