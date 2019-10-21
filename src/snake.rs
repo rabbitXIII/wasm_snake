@@ -19,13 +19,13 @@ impl Player {
         head: Cell { x: 5, y: 5 },
         tail: Vec::new(),
         direction: Direction::RIGHT,
-        should_grow: false,
+        should_grow: true,
       }
   }
 
   pub fn next(&self, canvas: &Canvas, input_queue: &mut Vec<Direction>) -> Player {
     let mut new_tail = self.tail.clone();
-    new_tail.push(self.head);
+    new_tail.insert(0, self.head);
     if !self.should_grow {
       new_tail.pop();
     }
@@ -103,9 +103,9 @@ impl Snake {
   pub fn draw(&self, canvas: &Canvas) {
     canvas.clear();
     canvas.draw(self.food, "red");
-    canvas.draw(self.player.head, "green");
     for index in 0..self.player.tail.len() {
       canvas.draw(self.player.tail[index], "lightgreen");
     }
+    canvas.draw(self.player.head, "green");
   }
 }
