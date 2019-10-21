@@ -57,14 +57,8 @@ pub struct Snake {
 
 impl Snake {
   pub fn new(canvas: &Canvas) -> Snake {
-    let random_x: u32 = js! {return Math.floor(Math.random() * @{canvas.get_width()})}
-      .try_into()
-      .unwrap();
-    let random_y: u32 = js! {return Math.floor(Math.random() * @{canvas.get_height()})}
-      .try_into()
-      .unwrap();
     Snake {
-      food: Cell { x: random_x, y: random_y },
+      food: Snake::create_food(canvas),
       player: Player {
         head: Cell { x: 5, y: 5 },
         tail: Vec::new(),
@@ -73,10 +67,25 @@ impl Snake {
     }
   }
 
+  fn create_food(canvas: &Canvas) -> Cell {
+    let random_x: u32 = js! {return Math.floor(Math.random() * @{canvas.get_width()})}
+      .try_into()
+      .unwrap();
+    let random_y: u32 = js! {return Math.floor(Math.random() * @{canvas.get_height()})}
+      .try_into()
+      .unwrap();
+    Cell { x: random_x, y: random_y }
+  }
+
   pub fn next_frame(&self, canvas: &Canvas, input_queue: &mut Vec<Direction>) -> Snake {
     let next_player = self.player.next(&canvas, input_queue);
+    let next_food = if next_player.head.x == self.food.x && next_player.head.y == self.food.y {
+      Snake::create_food(canvas)
+    } else {
+      self.food
+    };
     Snake {
-      food: self.food,
+      food: next_food,
       player: next_player,
     }
   }
