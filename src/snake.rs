@@ -10,13 +10,25 @@ struct Player {
   head: Cell,
   tail: Vec<Cell>,
   direction: Direction,
+  should_grow: bool,
 }
 
 impl Player {
+  pub fn new() -> Player {
+    Player {
+        head: Cell { x: 5, y: 5 },
+        tail: Vec::new(),
+        direction: Direction::RIGHT,
+        should_grow: false,
+      }
+  }
+
   pub fn next(&self, canvas: &Canvas, input_queue: &mut Vec<Direction>) -> Player {
     let mut new_tail = self.tail.clone();
     new_tail.push(self.head);
-    new_tail.pop();
+    if !self.should_grow {
+      new_tail.pop();
+    }
 
     let mut next_direction = self.direction;
     while let Some(direction) = input_queue.pop() {
@@ -46,6 +58,7 @@ impl Player {
       head: next_head,
       tail: new_tail,
       direction: next_direction,
+      should_grow: false,
     }
   }
 }
@@ -59,11 +72,7 @@ impl Snake {
   pub fn new(canvas: &Canvas) -> Snake {
     Snake {
       food: Snake::create_food(canvas),
-      player: Player {
-        head: Cell { x: 5, y: 5 },
-        tail: Vec::new(),
-        direction: Direction::RIGHT,
-      },
+      player: Player::new(),
     }
   }
 
@@ -79,11 +88,12 @@ impl Snake {
 
   pub fn next_frame(&self, canvas: &Canvas, input_queue: &mut Vec<Direction>) -> Snake {
     let next_player = self.player.next(&canvas, input_queue);
-    let next_food = if next_player.head.x == self.food.x && next_player.head.y == self.food.y {
-      Snake::create_food(canvas)
-    } else {
-      self.food
-    };
+    let next_food =
+      if next_player.head.x == self.food.x && next_player.head.y == self.food.y {
+        Snake::create_food(canvas)
+      } else {
+        self.food
+      };
     Snake {
       food: next_food,
       player: next_player,
