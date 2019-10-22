@@ -110,8 +110,12 @@ impl Snake {
     Cell { x: random_x, y: random_y }
   }
 
-  pub fn next_frame(&self, canvas: &Canvas, input_queue: &mut Vec<Direction>) -> Snake {
-    let calculated_player = self.player.next(&canvas, input_queue);
+  pub fn next_frame(&self, canvas: &Canvas, input_queue: &mut Vec<Direction>, frame_counter: u8) -> Snake {
+    let calculated_player = if frame_counter % 5 == 0 {
+      self.player.next(&canvas, input_queue)
+    } else {
+      self.player.clone()
+    };
     let next_player;
     let next_food =
       if calculated_player.head.x == self.food.x && calculated_player.head.y == self.food.y {
