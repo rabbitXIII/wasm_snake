@@ -1,7 +1,9 @@
 use crate::stdweb::unstable::TryInto;
+use stdweb::web::document;
+use stdweb::web::HtmlElement;
+use crate::stdweb::web::{INode, INonElementParentNode};
 
 use crate::canvas::Canvas;
-
 use crate::cell::Cell;
 use crate::direction::Direction;
 
@@ -11,6 +13,7 @@ struct Player {
   tail: Vec<Cell>,
   direction: Direction,
   should_grow: bool,
+  score: usize,
 }
 
 impl Player {
@@ -20,6 +23,7 @@ impl Player {
         tail: Vec::new(),
         direction: Direction::RIGHT,
         should_grow: true,
+        score: 0,
       }
   }
 
@@ -54,11 +58,14 @@ impl Player {
       },
     };
 
+    let score = new_tail.len();
+
     Player {
       head: next_head,
       tail: new_tail,
       direction: next_direction,
       should_grow: false,
+      score: score,
     }
   }
 
@@ -68,6 +75,7 @@ impl Player {
       tail: self.tail.clone(),
       direction: self.direction,
       should_grow: true,
+      score: self.score,
     }
   }
 }
@@ -119,5 +127,7 @@ impl Snake {
       canvas.draw(self.player.tail[index], "lightgreen");
     }
     canvas.draw(self.player.head, "green");
+    let output_div: HtmlElement = document().get_element_by_id("score").unwrap().try_into().unwrap();
+    output_div.set_text_content(format!("Current Score: {}", self.player.score).as_str());
   }
 }
