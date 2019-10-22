@@ -28,17 +28,6 @@ impl Player {
   }
 
   pub fn next(&self, canvas: &Canvas, input_queue: &mut Vec<Direction>) -> Player {
-    let mut new_tail = self.tail.clone();
-    new_tail.insert(0, self.head);
-    if !self.should_grow {
-      new_tail.pop();
-    }
-
-    let mut next_direction = self.direction;
-    while let Some(direction) = input_queue.pop() {
-      next_direction = direction;
-    }
-
     let next_head: Cell = match self.direction {
       Direction::DOWN => Cell {
         x: self.head.x,
@@ -58,7 +47,25 @@ impl Player {
       },
     };
 
+    if self.tail.clone().into_iter().any(|cell| cell.eq(&self.head)) {
+      return Player::new()
+    }
+
+    let mut new_tail = self.tail.clone();
+    new_tail.insert(0, self.head);
+    if !self.should_grow {
+      new_tail.pop();
+    }
+
+    let mut next_direction = self.direction;
+    while let Some(direction) = input_queue.pop() {
+      next_direction = direction;
+    }
+
+
+
     let score = new_tail.len();
+
 
     Player {
       head: next_head,
