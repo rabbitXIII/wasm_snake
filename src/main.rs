@@ -12,10 +12,12 @@ use stdweb::web::IEventTarget;
 mod canvas;
 mod cell;
 mod direction;
+mod message;
 mod snake;
 
 use canvas::Canvas;
 use direction::Direction;
+use message::Message;
 use snake::Snake;
 
 
@@ -32,10 +34,10 @@ fn main() {
         let input_queue = input_queue.clone();
         move |event: KeyDownEvent| {
             match event.key().as_ref() {
-                "ArrowLeft" => input_queue.borrow_mut().push(Direction::LEFT),
-                "ArrowRight" => input_queue.borrow_mut().push(Direction::RIGHT),
-                "ArrowDown" => input_queue.borrow_mut().push(Direction::DOWN),
-                "ArrowUp" => input_queue.borrow_mut().push(Direction::UP),
+                "ArrowLeft" => input_queue.borrow_mut().push(Message::new(1, Direction::LEFT)),
+                "ArrowRight" => input_queue.borrow_mut().push(Message::new(1, Direction::RIGHT)),
+                "ArrowDown" => input_queue.borrow_mut().push(Message::new(1, Direction::DOWN)),
+                "ArrowUp" => input_queue.borrow_mut().push(Message::new(1, Direction::UP)),
                 _ => {}
             };
         }
@@ -44,7 +46,7 @@ fn main() {
     fn game_loop(
         snake: Snake,
         canvas: Rc<Canvas>,
-        input_queue: Rc<RefCell<Vec<Direction>>>,
+        input_queue: Rc<RefCell<Vec<Message>>>,
         timeout: u32,
         frame_counter: u8
     ) {

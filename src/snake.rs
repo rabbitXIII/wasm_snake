@@ -6,9 +6,11 @@ use crate::stdweb::web::{INode, INonElementParentNode};
 use crate::canvas::Canvas;
 use crate::cell::Cell;
 use crate::direction::Direction;
+use crate::message::Message;
 
 #[derive(Clone)]
 struct Player {
+  id: u8,
   head: Cell,
   tail: Vec<Cell>,
   direction: Direction,
@@ -17,8 +19,9 @@ struct Player {
 }
 
 impl Player {
-  pub fn new() -> Player {
+  pub fn new(id: u8) -> Player {
     Player {
+        id,
         head: Cell { x: 5, y: 5 },
         tail: Vec::new(),
         direction: Direction::RIGHT,
@@ -27,7 +30,7 @@ impl Player {
       }
   }
 
-  pub fn next(&self, canvas: &Canvas, input_queue: &mut Vec<Direction>) -> Player {
+  pub fn next(&self, canvas: &Canvas, input_queue: &mut Vec<Message>) -> Player {
     let next_head: Cell = match self.direction {
       Direction::DOWN => Cell {
         x: self.head.x,
@@ -48,7 +51,7 @@ impl Player {
     };
 
     if self.tail.clone().into_iter().any(|cell| cell.eq(&self.head)) {
-      return Player::new()
+      return Player::new(self.id)
     }
 
     let mut new_tail = self.tail.clone();
@@ -58,16 +61,17 @@ impl Player {
     }
 
     let mut next_direction = self.direction;
-    while let Some(direction) = input_queue.pop() {
-      next_direction = direction;
+    for index in 0..input_queue.len() {
+      let message = input_queue.get(index).cloned();
+      if message.is_some() && message.unwrap().get_player_id() == self.id {
+        next_direction = input_queue.remove(index).get_direction();
+      }
     }
 
-
-
-    let score = new_tail.len();
-
+    let score = new_tail.len() - 1;
 
     Player {
+      id: self.id,
       head: next_head,
       tail: new_tail,
       direction: next_direction,
@@ -78,6 +82,7 @@ impl Player {
 
   pub fn grow(&self) -> Player {
     Player {
+      id: self.id,
       head: self.head,
       tail: self.tail.clone(),
       direction: self.direction,
@@ -96,7 +101,7 @@ impl Snake {
   pub fn new(canvas: &Canvas) -> Snake {
     Snake {
       food: Snake::create_food(canvas),
-      player: Player::new(),
+      player: Player::new(1),
     }
   }
 
@@ -110,7 +115,7 @@ impl Snake {
     Cell { x: random_x, y: random_y }
   }
 
-  pub fn next_frame(&self, canvas: &Canvas, input_queue: &mut Vec<Direction>, frame_counter: u8) -> Snake {
+  pub fn next_frame(&self, canvas: &Canvas, input_queue: &mut Vec<Message>, frame_counter: u8) -> Snake {
     let calculated_player = if frame_counter % 5 == 0 {
       self.player.next(&canvas, input_queue)
     } else {
