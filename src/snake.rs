@@ -8,6 +8,14 @@ use crate::cell::Cell;
 use crate::direction::Direction;
 use crate::message::Message;
 
+
+#[derive(Clone)]
+enum Color {
+  GREEN,
+  BLUE,
+  RED,
+}
+
 #[derive(Clone)]
 struct Player {
   id: u8,
@@ -16,10 +24,11 @@ struct Player {
   direction: Direction,
   should_grow: bool,
   score: usize,
+  color: Color,
 }
 
 impl Player {
-  pub fn new(id: u8) -> Player {
+  pub fn new(id: u8, color: Color) -> Player {
     Player {
         id,
         head: Cell { x: 5, y: 5 },
@@ -27,6 +36,7 @@ impl Player {
         direction: Direction::RIGHT,
         should_grow: true,
         score: 0,
+        color: color,
       }
   }
 
@@ -51,7 +61,7 @@ impl Player {
     };
 
     if self.tail.clone().into_iter().any(|cell| cell.eq(&self.head)) {
-      return Player::new(self.id)
+      return Player::new(self.id, Color::GREEN)
     }
 
     let mut new_tail = self.tail.clone();
@@ -62,9 +72,12 @@ impl Player {
 
     let mut next_direction = self.direction;
     for index in 0..input_queue.len() {
-      let message = input_queue.get(index).cloned();
+      let message = input_queue.get(index);
       if message.is_some() && message.unwrap().get_player_id() == self.id {
-        next_direction = input_queue.remove(index).get_direction();
+        let player_message = input_queue.remove(index);
+        if player_message.get_direction().opposite() != self.direction {
+          next_direction = player_message.get_direction();
+        }
       }
     }
 
@@ -77,6 +90,7 @@ impl Player {
       direction: next_direction,
       should_grow: false,
       score: score,
+      color: self.color.clone(),
     }
   }
 
@@ -88,20 +102,21 @@ impl Player {
       direction: self.direction,
       should_grow: true,
       score: self.score,
+      color: self.color.clone(),
     }
   }
 }
 
 pub struct Snake {
   food: Cell,
-  player: Player,
+  players: Vec<Player>,
 }
 
 impl Snake {
   pub fn new(canvas: &Canvas) -> Snake {
     Snake {
       food: Snake::create_food(canvas),
-      player: Player::new(1),
+      players: vec![Player::new(1, Color::GREEN)],
     }
   }
 
@@ -116,10 +131,13 @@ impl Snake {
   }
 
   pub fn next_frame(&self, canvas: &Canvas, input_queue: &mut Vec<Message>, frame_counter: u8) -> Snake {
+    let length = input_queue.len() as i32;
+    js! {console.log(@{length})};
+
     let calculated_player = if frame_counter % 5 == 0 {
-      self.player.next(&canvas, input_queue)
+      self.players[0].next(&canvas, input_queue)
     } else {
-      self.player.clone()
+      self.players[0].clone()
     };
     let next_player;
     let next_food =
@@ -132,18 +150,21 @@ impl Snake {
       };
     Snake {
       food: next_food,
-      player: next_player,
+      players: vec![next_player],
     }
   }
 
   pub fn draw(&self, canvas: &Canvas) {
     canvas.clear();
     canvas.draw(self.food, "red");
-    for index in 0..self.player.tail.len() {
-      canvas.draw(self.player.tail[index], "lightgreen");
+    for player_id in 0..self.players.len() {
+      let current_player = &self.players[player_id];
+      for index in 0..current_player.tail.len() {
+        canvas.draw(current_player.tail[index], "lightgreen");
+      }
+      canvas.draw(current_player.head, "green");
+      let output_div: HtmlElement = document().get_element_by_id("score").unwrap().try_into().unwrap();
+      output_div.set_text_content(format!("Player {} Score: {}", current_player.id, current_player.score).as_str());
     }
-    canvas.draw(self.player.head, "green");
-    let output_div: HtmlElement = document().get_element_by_id("score").unwrap().try_into().unwrap();
-    output_div.set_text_content(format!("Current Score: {}", self.player.score).as_str());
   }
 }
