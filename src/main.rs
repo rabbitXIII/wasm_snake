@@ -47,19 +47,15 @@ fn main() {
         snake: Snake,
         canvas: Rc<Canvas>,
         input_queue: Rc<RefCell<Vec<Message>>>,
-        timeout: u32,
         frame_counter: u8
     ) {
-        stdweb::web::set_timeout(
-            move || {
-                let new_snake =
-                    snake.next_frame(&canvas, input_queue.borrow_mut().deref_mut(), frame_counter);
-                new_snake.draw(&canvas);
-                game_loop(new_snake, canvas.clone(), input_queue, timeout, (frame_counter + 1) % 60);
-            },
-            timeout,
-        )
+        let next_snake =
+            snake.next_frame(&canvas, input_queue.borrow_mut().deref_mut(), frame_counter);
+        next_snake.draw(&canvas);
+        let next_frame_counter = (frame_counter + 1) % 60;
+        stdweb::web::window().request_animation_frame(move |_| {game_loop(next_snake, canvas.clone(), input_queue, next_frame_counter)});
     }
-    game_loop(snake, Rc::new(canvas), input_queue, 17, 0u8);
+
+    stdweb::web::window().request_animation_frame(move |_| {game_loop(snake, Rc::new(canvas), input_queue, 0u8)});
     stdweb::event_loop();
 }

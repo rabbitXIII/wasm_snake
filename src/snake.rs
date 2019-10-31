@@ -94,6 +94,18 @@ impl Player {
     }
   }
 
+  pub fn should_move(&self, frame_counter: u8) -> bool {
+    frame_counter % (6 - self.calculate_speed()) == 0
+  }
+
+  fn calculate_speed(&self) -> u8 {
+    let score_speed = 5f32 * (self.score as f32 / 50f32);
+    if score_speed > 5f32 {
+      return 5u8;
+    }
+    score_speed.round() as u8
+  }
+
   pub fn grow(&self) -> Player {
     Player {
       id: self.id,
@@ -132,9 +144,8 @@ impl Snake {
 
   pub fn next_frame(&self, canvas: &Canvas, input_queue: &mut Vec<Message>, frame_counter: u8) -> Snake {
     let length = input_queue.len() as i32;
-    js! {console.log(@{length})};
 
-    let calculated_player = if frame_counter % 5 == 0 {
+    let calculated_player = if self.players[0].should_move(frame_counter) {
       self.players[0].next(&canvas, input_queue)
     } else {
       self.players[0].clone()
